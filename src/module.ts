@@ -9,9 +9,11 @@ import {
 export interface SeoModuleOptions {
   auto: boolean;
   locale: string;
+  title?: string;
+  description?: string;
   general: {
-    tagline: string;
-    social: Array<{
+    tagline?: string;
+    social?: Array<{
       type:
         | "facebook"
         | "twitter"
@@ -25,15 +27,15 @@ export interface SeoModuleOptions {
         | "other";
       link: string;
     }>;
-    defaultImage: string;
+    defaultImage?: string;
   };
-  organization: {
+  organization?: {
     show: boolean;
-    type: string;
     name: string;
     logo: string;
     url: string;
-    address: {
+    type?: string;
+    address?: {
       type: string;
       streetAddress: string;
       addressLocality: string;
@@ -41,52 +43,52 @@ export interface SeoModuleOptions {
       postalCode: string;
       addressCountry: string;
     };
-    extra: Array<{
+    extra?: Array<{
       key: string;
       value: any;
     }>;
   };
-  website: {
+  website?: {
     show: boolean;
-    type: string;
     name: string;
     url: string;
-    search: {
+    type?: string;
+    search?: {
       show: boolean;
       action: string;
     };
-    extra: Array<{
+    extra?: Array<{
       key: string;
       value: any;
     }>;
   };
-  webpage: {
+  webpage?: {
     show: boolean;
-    type: string;
-    url: string;
-    image: string;
-    datePublished: string;
-    dateModified: string;
-    extra: Array<{
+    url?: string;
+    image?: string;
+    datePublished?: string;
+    dateModified?: string;
+    type?: string;
+    extra?: Array<{
       key: string;
       value: any;
     }>;
   };
-  breadcrumbs: {
+  breadcrumbs?: {
     show: boolean;
-    excludedPaths: Array<string>;
+    excludedPaths?: Array<string>;
   };
   schemas?: Array<{
     hid: string;
     schema: object;
   }>;
-  title: {
-    separator: string;
-    template: string;
-    params: object;
+  titles?: {
+    separator?: string;
+    template?: string;
+    params?: object;
   };
-  favicon: {
-    link: Array<{
+  favicon?: {
+    link?: Array<{
       rel:
         | "apple-touch-icon"
         | "icon"
@@ -97,11 +99,40 @@ export interface SeoModuleOptions {
       sizes?: "16x16" | "32x32" | "96x96" | "192x192" | "512x512";
       color?: string;
     }>;
-    meta: Array<{
+    meta?: Array<{
       name: "msapplication-TileColor" | "theme-color";
       content: string;
     }>;
   };
+  link?: Array<{
+    crossorigin?: string;
+    href?: string;
+    hreflang?: string;
+    media?: string;
+    referrerpolicy?: string;
+    rel?: string;
+    sizes?: string;
+    title?: string;
+  }>;
+  meta?: Array<{
+    name?: string;
+    content?: string;
+    charset?: string;
+    "http-equiv"?: string;
+  }>;
+  script?: Array<{
+    async?: boolean;
+    charset?: string;
+    crossorigin?: string;
+    defer?: boolean;
+    integrity?: string;
+    nomodule?: boolean;
+    nonce?: string;
+    src?: string;
+    type?: string;
+    innerHTML?: string;
+    children?: string;
+  }>;
 }
 
 export default defineNuxtModule<SeoModuleOptions>({
@@ -168,7 +199,7 @@ export default defineNuxtModule<SeoModuleOptions>({
       meta: [],
     },
 
-    title: {
+    titles: {
       separator: "-",
       template: "%s %separator %site.name",
       params: {},
@@ -179,11 +210,13 @@ export default defineNuxtModule<SeoModuleOptions>({
     const resolver = createResolver(import.meta.url);
 
     // Add default title params
-    options.title.params = {
+    // Failsafe for missing options
+    options.titles = options.titles || {};
+    options.titles.params = {
       site: {
         name: options?.website?.name,
       },
-      separator: options.title.separator,
+      separator: options.titles.separator,
       tagline: options.general.tagline,
     };
 

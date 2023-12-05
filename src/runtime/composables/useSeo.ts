@@ -1,8 +1,12 @@
 import type { SeoModuleOptions } from "~/src/module";
 
 export const useSeo = (options: SeoModuleOptions | boolean = false) => {
+  const runtimeOptions = useRuntimeConfig().app?.seo;
   // Setup options
-  options = initOptions(options);
+  options = initOptions(options, runtimeOptions) as SeoModuleOptions;
+
+  // Options fail safe
+  options.titles = options.titles || {};
 
   // Setup options.meta && options.link
   options.meta = options.meta || [];
@@ -24,10 +28,12 @@ export const useSeo = (options: SeoModuleOptions | boolean = false) => {
     ...generateBaseSchema(options, pageTitle, pageDescription),
     ...generateExtraSchemas(options?.schemas || []),
   ];
+
+  // @ts-ignore
   useHead({
     title: pageTitle,
-    templateParams: options.title.params,
-    titleTemplate: options.title.template,
+    templateParams: options.titles.params,
+    titleTemplate: options.titles.template,
     meta: [
       ...favicons.meta,
       ...options.meta,
@@ -44,7 +50,7 @@ export const useSeo = (options: SeoModuleOptions | boolean = false) => {
 };
 
 // Generate Extra Schemas
-const generateExtraSchemas = (schemas: Array<{ hid; schema }>) => {
+const generateExtraSchemas = (schemas: Array<{ hid: string; schema: any }>) => {
   if (!schemas) return [];
   if (typeof schemas === "object") {
     schemas = Object.values(schemas);
@@ -63,7 +69,7 @@ const generateExtraSchemas = (schemas: Array<{ hid; schema }>) => {
 const generateBaseSchema = (
   options: SeoModuleOptions,
   title: string,
-  description: string
+  description: string | undefined
 ) => {
   const schemas = [];
   // Add Organization Schema
@@ -86,9 +92,10 @@ const generateBaseSchema = (
           postalCode: options?.organization?.address?.postalCode,
           addressCountry: options?.organization?.address?.addressCountry,
         },
-      },
+      } as Organization,
     };
-    // sameAs: options?.general?.social?.map((social) => social.link),
+
+    // Add social links
     if (typeof options?.general?.social === "object") {
       options.general.social = Object.values(options.general.social);
     }
@@ -146,15 +153,11 @@ const generateBaseSchema = (
       innerHTML: {
         "@context": "https://schema.org",
         "@type": "WebPage",
-        "@id": options?.website?.url + options?.webpage?.url + "#webpage",
         url: options?.website?.url,
-        name: options?.title.template,
         isPartOf: {
           "@type": options?.website?.type || "WebSite",
           "@id": options?.website?.url + "#website",
         },
-        // datePublished: options?.webpage?.datePublished,
-        // dateModified: options?.webpage?.dateModified,
         description: description,
         inLanguage: options?.locale,
         potentialAction: [
@@ -163,8 +166,20 @@ const generateBaseSchema = (
             target: [options?.webpage?.url],
           },
         ],
-      },
+      } as Webpage,
     };
+
+    // Fail safe for potentially missing options
+    // - ID
+    if (options?.website?.url && options?.webpage?.url) {
+      const id = options.website.url + (options.webpage.url || "");
+      webpageSchema.innerHTML["@id"] = id + "#webpage";
+    }
+    // - name
+    //  name: options?.titles.template,
+    if (options?.titles?.template) {
+      webpageSchema.innerHTML.name = options.titles.template;
+    }
     // Add datePublished and dateModified
     if (options?.webpage?.datePublished) {
       webpageSchema.innerHTML.datePublished = options?.webpage?.datePublished;
@@ -194,6 +209,7 @@ const generateBaseSchema = (
         itemListElement: [...generateBreadcrumbList(options)],
       },
     };
+    // @ts-ignore
     if (useRoute().path !== "/") {
       schemas.push(breadcrumbSchema);
     }
@@ -246,11 +262,13 @@ const generateBreadcrumbList = (options: SeoModuleOptions) => {
 };
 
 // Convert array of objects to schema
-const arrayToSchema = (array: Array<{ key; value }>) => {
-  const schema = {};
+const arrayToSchema = (array: Array<{ key: string; value: any }>) => {
+  const schema: { [key: string]: any } = {};
+
   array.forEach((item) => {
     schema[item.key] = item.value;
   });
+
   return schema;
 };
 
@@ -258,109 +276,143 @@ const arrayToSchema = (array: Array<{ key; value }>) => {
 const prepareOpenGraphTags = (
   options: SeoModuleOptions,
   title: string,
-  description: string
+  description: string | undefined
 ) => {
   const tags = [];
   // og:title
-  tags.push({
-    hid: "og:title",
-    property: "og:title",
-    content: options.title.template,
-  });
-  // og:description
-  tags.push({
-    hid: "og:description",
-    property: "og:description",
-    content: description,
-  });
-  // og:image
-  tags.push({
-    hid: "og:image",
-    property: "og:image",
-    content: options?.webpage?.image || options?.general?.defaultImage,
-  });
-  // og:site_name
-  tags.push({
-    hid: "og:site_name",
-    property: "og:site_name",
-    content: options?.website?.name,
-  });
-  // og:locale
-  tags.push({
-    hid: "og:locale",
-    property: "og:locale",
-    content: options?.locale,
-  });
-  // og:type
-  tags.push({
-    hid: "og:type",
-    property: "og:type",
-    content: "website",
-  });
-  // name="twitter:card" content="summary"
-  tags.push({
-    hid: "twitter:card",
-    name: "twitter:card",
-    content: "summary",
-  });
-  // name="twitter:site" content="@thisismess"
-  const twitter = Object.values(options?.general?.social).find(
-    (social) => social.type === "twitter" || social.type === "x"
-  );
-  if (twitter) {
+  if (options?.titles?.template) {
     tags.push({
-      hid: "twitter:site",
-      name: "twitter:site",
-      content: twitter.link,
+      hid: "og:title",
+      property: "og:title",
+      content: options.titles.template,
+    });
+
+    tags.push({
+      hid: "twitter:title",
+      name: "twitter:title",
+      content: options.titles.template,
     });
   }
-  // name="twitter:title" content="Mess Marketing"
-  tags.push({
-    hid: "twitter:title",
-    name: "twitter:title",
-    content: title,
-  });
-  // name="twitter:description" content="We help businesses grow."
-  tags.push({
-    hid: "twitter:description",
-    name: "twitter:description",
-    content: description,
-  });
-  // name="twitter:image" content="https://s3.amazonaws.com/thisismess-assets/mess/live/static/img/og-share-image.jpg"
-  tags.push({
-    hid: "twitter:image",
-    name: "twitter:image",
-    content: options.defaultImage,
-  });
-  // name="twitter:image:alt" content="Mess Marketing"
-  tags.push({
-    hid: "twitter:image:alt",
-    name: "twitter:image:alt",
-    content: title,
-  });
+  // og:description
+  if (description) {
+    tags.push({
+      hid: "og:description",
+      property: "og:description",
+      content: description,
+    });
+    tags.push({
+      hid: "twitter:description",
+      name: "twitter:description",
+      content: description,
+    });
+  }
+
+  // og:image
+  if (options?.webpage?.image || options?.general?.defaultImage) {
+    tags.push({
+      hid: "og:image",
+      property: "og:image",
+      content: options?.webpage?.image || options?.general?.defaultImage,
+    });
+    tags.push({
+      hid: "twitter:card",
+      name: "twitter:card",
+      content: "summary",
+    });
+    tags.push({
+      hid: "twitter:image",
+      name: "twitter:image",
+      content: options?.webpage?.image || options?.general?.defaultImage,
+    });
+    tags.push({
+      hid: "twitter:image:alt",
+      name: "twitter:image:alt",
+      content: title,
+    });
+  }
+  // og:site_name
+  if (options?.website?.name) {
+    tags.push({
+      hid: "og:site_name",
+      property: "og:site_name",
+      content: options?.website?.name,
+    });
+  }
+
+  // og:locale
+  if (options?.locale) {
+    tags.push({
+      hid: "og:locale",
+      property: "og:locale",
+      content: options?.locale,
+    });
+  }
+  // og:type
+  if (options?.webpage?.type) {
+    tags.push({
+      hid: "og:type",
+      property: "og:type",
+      content: options?.webpage?.type,
+    });
+  } else {
+    tags.push({
+      hid: "og:type",
+      property: "og:type",
+      content: "website",
+    });
+  }
+
+  if (options?.general?.social?.length) {
+    const twitter = Object.values(options?.general?.social).find(
+      (social) => social.type === "twitter" || social.type === "x"
+    );
+    if (twitter) {
+      tags.push({
+        hid: "twitter:site",
+        name: "twitter:site",
+        content: twitter.link,
+      });
+    }
+  }
+
   return tags;
 };
 
 // Prepare Favicons
 const prepareFavicons = (options: SeoModuleOptions) => {
   const favicons = {
-    link: [],
-    meta: [],
+    link: [] as Array<{
+      rel: string;
+      sizes: string;
+      href: string;
+    }>,
+    meta: [] as Array<{
+      name: string;
+      content: string;
+    }>,
   };
 
-  Object.values(options?.favicon?.link).forEach((favicon) => {
-    favicons.link.push({
-      rel: favicon.rel,
-      sizes: favicon.sizes,
-      href: favicon.href,
+  if (options?.favicon?.link) {
+    Object.values(options?.favicon?.link).forEach((favicon) => {
+      const favi = {
+        rel: favicon.rel,
+        sizes: favicon.sizes || "", // Add a default value of an empty string if sizes is undefined
+        href: favicon.href,
+      };
+      favicons.link.push(favi);
+      return false;
     });
-  });
-  Object.values(options?.favicon?.meta).forEach((favicon) => {
-    favicons.meta.push({
-      name: favicon.name,
-      content: favicon.content,
+  }
+
+  if (options?.favicon?.meta) {
+    Object.values(options?.favicon?.meta).forEach((favicon) => {
+      favicons.meta.push({
+        name: favicon.name,
+        content: favicon.content,
+      });
+      return false;
     });
-  });
+  }
 
   return favicons;
 };
@@ -368,13 +420,17 @@ const prepareFavicons = (options: SeoModuleOptions) => {
 // Get page title
 const getPageTitle = (options: SeoModuleOptions, title: string = "") => {
   // If title is provided, use it
-  title = options?.title;
+  if (options?.title) {
+    title = options?.title;
+  }
   // Otherwise, get the title from the route path
   if (!title) {
+    // @ts-ignore
     const route = useRoute();
     const path = route?.path;
     if (!path) return "";
     if (path === "/") return "Home";
+    // @ts-ignore
     else title = pathToTitle(path);
   }
   return title;
@@ -412,14 +468,18 @@ const pathToTitle = (path: string) => {
 };
 
 // Get options from runtime config and merge with module options
-const initOptions = (options: SeoModuleOptions | boolean = false) => {
+const initOptions = (
+  options: SeoModuleOptions | boolean = false,
+  runtimeOptions: SeoModuleOptions
+) => {
   // Deep freeze the options object
   const seoOptions = JSON.parse(
-    JSON.stringify(useRuntimeConfig().app?.seo)
+    JSON.stringify(runtimeOptions)
   ) as SeoModuleOptions;
 
   // Setup webpage variables
   if (seoOptions?.webpage?.show) {
+    // @ts-ignore
     seoOptions.webpage.url = useRoute().path;
   }
 
@@ -439,4 +499,45 @@ const deepMerge = (target: any, source: any) => {
     else output[key] = source[key];
   }
   return output;
+};
+
+// Local Types
+type Organization = {
+  "@context": string;
+  "@type": string | undefined;
+  name: string;
+  url: string;
+  logo: string;
+  address: {
+    "@type": string;
+    streetAddress: string | undefined;
+    addressLocality: string | undefined;
+    addressRegion: string | undefined;
+    postalCode: string | undefined;
+    addressCountry: string | undefined;
+  };
+  sameAs?: Array<string>; // Add this line
+};
+
+type Webpage = {
+  "@context": string;
+  "@type": string | undefined;
+  name: string;
+  url: string;
+  isPartOf: {
+    "@type": string | undefined;
+    "@id": string;
+  };
+  description: string;
+  inLanguage: string;
+  potentialAction: Array<{
+    "@type": string;
+    target: Array<string>;
+  }>;
+  datePublished?: string;
+  dateModified?: string;
+  extra?: Array<{
+    key: string;
+    value: any;
+  }>;
 };

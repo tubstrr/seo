@@ -26,13 +26,13 @@ SEO module on Nuxt3 that helps you write title's, descriptions, favicons, and Sc
 
 ```bash
 # Using pnpm
-pnpm add -D seo
+pnpm add -D @tubstrr/seo
 
 # Using yarn
-yarn add --dev seo
+yarn add --dev @tubstrr/seo
 
 # Using npm
-npm install --save-dev seo
+npm install --save-dev @tubstrr/seo
 ```
 
 2. Add `@tubstrr/seo` to the `modules` section of `nuxt.config.ts`
@@ -443,11 +443,11 @@ Here are the default options that are set for `useSeo()`:
 
 ```js
 // Add default title params
-options.title.params = {
+options.titles.params = {
   site: {
     name: options?.website?.name,
   },
-  separator: options.title.separator,
+  separator: options.titles.separator,
   tagline: options.general.tagline,
 };
 ```
