@@ -2,7 +2,7 @@
   "name": "seo",
   "version": "0.0.1",
   "description": "SEO module on Nuxt3 that helps you write title's, descriptions, favicons, and Schema's",
-  "repository": "tubstrr/seo",
+  "repository": "https://github.com/tubstrr/seo",
   "license": "MIT",
   "type": "module",
   "exports": {
