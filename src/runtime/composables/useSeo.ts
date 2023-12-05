@@ -26,8 +26,8 @@ export const useSeo = (options: SeoModuleOptions | boolean = false) => {
   ];
   useHead({
     title: pageTitle,
-    templateParams: options.templateParams,
-    titleTemplate: options.titleTemplate,
+    templateParams: options.title.params,
+    titleTemplate: options.title.template,
     meta: [
       ...favicons.meta,
       ...options.meta,
@@ -71,6 +71,7 @@ const generateBaseSchema = (
     const organizationSchema = {
       hid: "defaultSeoBaseOrganizationSchema",
       type: "application/ld+json",
+      processTemplateParams: true,
       innerHTML: {
         "@context": "https://schema.org",
         "@type": options?.organization?.type,
@@ -147,7 +148,7 @@ const generateBaseSchema = (
         "@type": "WebPage",
         "@id": options?.website?.url + options?.webpage?.url + "#webpage",
         url: options?.website?.url,
-        name: options?.titleTemplate,
+        name: options?.title.template,
         isPartOf: {
           "@type": options?.website?.type || "WebSite",
           "@id": options?.website?.url + "#website",
@@ -190,7 +191,7 @@ const generateBaseSchema = (
       innerHTML: {
         "@context": "https://schema.org",
         "@type": "BreadcrumbList",
-        itemListElement: [...generateBreadcrumbList(options, title)],
+        itemListElement: [...generateBreadcrumbList(options)],
       },
     };
     if (useRoute().path !== "/") {
@@ -202,7 +203,7 @@ const generateBaseSchema = (
 };
 
 // Generate Breadcrumb List
-const generateBreadcrumbList = (options: SeoModuleOptions, title: string) => {
+const generateBreadcrumbList = (options: SeoModuleOptions) => {
   const ListElements = [
     {
       "@type": "ListItem",
@@ -264,7 +265,7 @@ const prepareOpenGraphTags = (
   tags.push({
     hid: "og:title",
     property: "og:title",
-    content: options.titleTemplate,
+    content: options.title.template,
   });
   // og:description
   tags.push({
@@ -276,7 +277,7 @@ const prepareOpenGraphTags = (
   tags.push({
     hid: "og:image",
     property: "og:image",
-    content: options?.webpage?.image || options?.general?.default_image,
+    content: options?.webpage?.image || options?.general?.defaultImage,
   });
   // og:site_name
   tags.push({
@@ -329,7 +330,7 @@ const prepareOpenGraphTags = (
   tags.push({
     hid: "twitter:image",
     name: "twitter:image",
-    content: options.default_image,
+    content: options.defaultImage,
   });
   // name="twitter:image:alt" content="Mess Marketing"
   tags.push({

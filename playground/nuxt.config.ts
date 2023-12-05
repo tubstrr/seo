@@ -4,7 +4,7 @@ export default defineNuxtConfig({
     locale: "en_US",
     general: {
       tagline: "We are a fiercely independent design and development studio.",
-      default_image:
+      defaultImage:
         "https://s3.amazonaws.com/thisismess-assets/mess/live/static/img/og-share-image.jpg",
       social: [
         {

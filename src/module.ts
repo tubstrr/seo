@@ -8,6 +8,7 @@ import {
 // Module options TypeScript interface definition
 export interface SeoModuleOptions {
   auto: boolean;
+  locale: string;
   general: {
     tagline: string;
     social: Array<{
@@ -24,14 +25,14 @@ export interface SeoModuleOptions {
         | "other";
       link: string;
     }>;
-    siteImage: string;
+    defaultImage: string;
   };
   organization: {
     show: boolean;
     type: string;
     name: string;
-    use: string;
     logo: string;
+    url: string;
     address: {
       type: string;
       streetAddress: string;
@@ -39,11 +40,11 @@ export interface SeoModuleOptions {
       addressRegion: string;
       postalCode: string;
       addressCountry: string;
-      extra: Array<{
-        key: string;
-        value: any;
-      }>;
     };
+    extra: Array<{
+      key: string;
+      value: any;
+    }>;
   };
   website: {
     show: boolean;
@@ -75,13 +76,15 @@ export interface SeoModuleOptions {
     show: boolean;
     excludedPaths: Array<string>;
   };
-  schemas: Array<{
+  schemas?: Array<{
     hid: string;
     schema: object;
   }>;
-  titleSeparator: string;
-  titleTemplate: string;
-  titleParams: object;
+  title: {
+    separator: string;
+    template: string;
+    params: object;
+  };
   favicon: {
     link: Array<{
       rel:
@@ -99,7 +102,6 @@ export interface SeoModuleOptions {
       content: string;
     }>;
   };
-  locale: string;
 }
 
 export default defineNuxtModule<SeoModuleOptions>({
@@ -110,11 +112,11 @@ export default defineNuxtModule<SeoModuleOptions>({
   // Default configuration options of the Nuxt module
   defaults: {
     auto: true,
+    locale: "en_US",
     general: {
-      locale: "en_US",
       tagline: "",
       social: [],
-      siteImage: "",
+      defaultImage: "",
     },
 
     organization: {
@@ -166,19 +168,22 @@ export default defineNuxtModule<SeoModuleOptions>({
       meta: [],
     },
 
-    titleSeparator: "-",
-    titleTemplate: "%s %separator %site.name",
+    title: {
+      separator: "-",
+      template: "%s %separator %site.name",
+      params: {},
+    },
   },
 
   setup(options, nuxt) {
     const resolver = createResolver(import.meta.url);
 
     // Add default title params
-    options.templateParams = {
+    options.title.params = {
       site: {
         name: options?.website?.name,
       },
-      separator: options.titleSeparator,
+      separator: options.title.separator,
       tagline: options.general.tagline,
     };
 
