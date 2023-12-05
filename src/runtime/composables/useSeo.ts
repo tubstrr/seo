@@ -1,9 +1,9 @@
 import type { SeoModuleOptions } from "~/src/module";
+import { useHead, useRoute, useRuntimeConfig } from "#app";
 
 export const useSeo = (options: SeoModuleOptions | boolean = false) => {
-  const runtimeOptions = useRuntimeConfig().app?.seo;
   // Setup options
-  options = initOptions(options, runtimeOptions) as SeoModuleOptions;
+  options = initOptions(options) as SeoModuleOptions;
 
   // Options fail safe
   options.titles = options.titles || {};
@@ -29,7 +29,6 @@ export const useSeo = (options: SeoModuleOptions | boolean = false) => {
     ...generateExtraSchemas(options?.schemas || []),
   ];
 
-  // @ts-ignore
   useHead({
     title: pageTitle,
     templateParams: options.titles.params,
@@ -209,7 +208,6 @@ const generateBaseSchema = (
         itemListElement: [...generateBreadcrumbList(options)],
       },
     };
-    // @ts-ignore
     if (useRoute().path !== "/") {
       schemas.push(breadcrumbSchema);
     }
@@ -418,19 +416,20 @@ const prepareFavicons = (options: SeoModuleOptions) => {
 };
 
 // Get page title
-const getPageTitle = (options: SeoModuleOptions, title: string = "") => {
+const getPageTitle = (
+  options: SeoModuleOptions,
+  title: string | undefined = ""
+) => {
   // If title is provided, use it
   if (options?.title) {
     title = options?.title;
   }
   // Otherwise, get the title from the route path
   if (!title) {
-    // @ts-ignore
     const route = useRoute();
     const path = route?.path;
     if (!path) return "";
     if (path === "/") return "Home";
-    // @ts-ignore
     else title = pathToTitle(path);
   }
   return title;
@@ -468,18 +467,14 @@ const pathToTitle = (path: string) => {
 };
 
 // Get options from runtime config and merge with module options
-const initOptions = (
-  options: SeoModuleOptions | boolean = false,
-  runtimeOptions: SeoModuleOptions
-) => {
+const initOptions = (options: SeoModuleOptions | boolean = false) => {
   // Deep freeze the options object
   const seoOptions = JSON.parse(
-    JSON.stringify(runtimeOptions)
+    JSON.stringify(useRuntimeConfig().app?.seo)
   ) as SeoModuleOptions;
 
   // Setup webpage variables
   if (seoOptions?.webpage?.show) {
-    // @ts-ignore
     seoOptions.webpage.url = useRoute().path;
   }
 
