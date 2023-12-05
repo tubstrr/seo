@@ -1,9 +1,16 @@
 import type { SeoModuleOptions } from "~/src/module";
 import { useHead, useRoute, useRuntimeConfig } from "#app";
 
-export const useSeo = (options: SeoModuleOptions | boolean = false) => {
-  // Setup options
-  options = initOptions(options) as SeoModuleOptions;
+export const useSeo = (
+  options: SeoModuleOptions | boolean = false,
+  sideload: boolean = false
+) => {
+  if (!sideload) {
+    // Setup options
+    options = initOptions(options) as SeoModuleOptions;
+  } else {
+    options = (options as SeoModuleOptions) || {};
+  }
 
   // Options fail safe
   options.titles = options.titles || {};
@@ -67,7 +74,7 @@ const generateExtraSchemas = (schemas: Array<{ hid: string; schema: any }>) => {
 // Generate Base Schema
 const generateBaseSchema = (
   options: SeoModuleOptions,
-  title: string,
+  title: string | undefined,
   description: string | undefined
 ) => {
   const schemas = [];
@@ -273,7 +280,7 @@ const arrayToSchema = (array: Array<{ key: string; value: any }>) => {
 // Prepare Open Graph Tags
 const prepareOpenGraphTags = (
   options: SeoModuleOptions,
-  title: string,
+  title: string | undefined,
   description: string | undefined
 ) => {
   const tags = [];
