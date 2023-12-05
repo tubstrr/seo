@@ -489,7 +489,7 @@ const initOptions = (options: SeoModuleOptions | boolean = false) => {
 const deepMerge = (target: any, source: any) => {
   const output = Object.assign({}, target);
   for (const key of Object.keys(source)) {
-    if (source[key] instanceof Object)
+    if (source[key] instanceof Object && !Array.isArray(source[key]))
       output[key] = deepMerge(output[key], source[key]);
     else output[key] = source[key];
   }
