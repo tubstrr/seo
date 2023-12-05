@@ -1,6 +1,6 @@
 {
   "name": "@tubstrr/seo",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "SEO module on Nuxt3 that helps you write title's, descriptions, favicons, and Schema's",
   "repository": "tubstrr/seo",
   "license": "MIT",
