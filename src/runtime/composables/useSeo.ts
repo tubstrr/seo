@@ -1,16 +1,73 @@
 import type { SeoModuleOptions } from "~/src/module";
 import { useHead, useRoute, useRuntimeConfig } from "#app";
 
-export const useSeo = (
-  options: SeoModuleOptions | boolean = false,
-  sideload: boolean = false
-) => {
-  if (!sideload) {
-    // Setup options
-    options = initOptions(options) as SeoModuleOptions;
-  } else {
-    options = (options as SeoModuleOptions) || {};
+export const addSeo = (options: SeoModuleOptions) => {
+  // Go through the options passed in, and only update the ones that are defined
+  if (options?.title) {
+    useHead({
+      title: options.title,
+    });
   }
+
+  if (options?.description) {
+    const ogTags = prepareOpenGraphTags(options, "", options.description);
+    useHead({
+      meta: [
+        ...ogTags,
+        {
+          hid: "description",
+          name: "description",
+          content: options.description,
+        },
+      ],
+    });
+  }
+
+  if (options?.schemas) {
+    Object.values(options.schemas).forEach((schema) => {
+      useHead({
+        script: [
+          {
+            hid: schema.hid,
+            type: "application/ld+json",
+            innerHTML: schema.schema,
+            processTemplateParams: true,
+          },
+        ],
+      });
+    });
+  }
+
+  if (options?.favicon) {
+    const favicons = prepareFavicons(options);
+    useHead({
+      link: [...favicons.link],
+      meta: [...favicons.meta],
+    });
+  }
+
+  if (options?.link) {
+    useHead({
+      link: [...options.link],
+    });
+  }
+
+  if (options?.meta) {
+    useHead({
+      meta: [...options.meta],
+    });
+  }
+
+  if (options?.script) {
+    useHead({
+      script: [...options.script],
+    });
+  }
+};
+
+export const useSeo = (options: SeoModuleOptions | boolean = false) => {
+  // Setup options
+  options = initOptions(options) as SeoModuleOptions;
 
   // Options fail safe
   options.titles = options.titles || {};
@@ -542,4 +599,9 @@ type Webpage = {
     key: string;
     value: any;
   }>;
+};
+
+type SchemaType = {
+  hid: string;
+  value: object;
 };
