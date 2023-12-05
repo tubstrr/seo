@@ -198,6 +198,9 @@ const options = {
 useSeo(options);
 ```
 
+#### addSeo() composable
+the `addSeo()` composable is essentially the same set of function calls as the `useSeo()` composable, although with one key difference.  `addSeo()` will only update the options that you pass into it, it will not merge with the base configuration, and will not create the Organization, Website, Webpage, or Breadcrumb schemas.    Will allow you to add `schemas` to the page from a block level, example being an Accordion block that needs to create an FAQ Schema.
+
 #### Full SEO Options
 
 These are all the options that the `useSeo()` will use. When the composable is called, it will merge the `options` object that is passed into the function, with `nuxt.config.seo` object, preferring the object passed into the function.
